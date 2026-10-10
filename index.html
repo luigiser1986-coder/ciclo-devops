@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ciclo DevOps Interactivo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+html{color-scheme:light}[hidden]{display:none!important}body{margin:0}
+/* Layout: cabecera + 3 pestañas; cada una = diagrama a la izquierda/arriba, panel de detalle abajo/derecha */
+:root{
+  --bg:#F4F5F5; --surface:#FFFFFF; --fg:#2C2A29; --muted:#55524F; --line:#D5D6D6;
+  --yellow:#FDC82F; --cyan:#29C1E0; --green:#3A9E6F; --purple:#7A5CC4; --red:#D8242B;
+  --on-yellow:#2C2A29; --code-bg:#2C2A29; --code-fg:#F4F5F5;
+  --font:"Figtree",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1E1D1C; --surface:#2C2A29; --fg:#F4F5F5; --muted:#B9B8B6; --line:#4A4745;
+  --green:#4DBB88; --purple:#9C84DD; --red:#F0575D; --code-bg:#171615; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1E1D1C; --surface:#2C2A29; --fg:#F4F5F5; --muted:#B9B8B6; --line:#4A4745;
+  --green:#4DBB88; --purple:#9C84DD; --red:#F0575D; --code-bg:#171615; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);padding-inline:16px;padding-block:20px 40px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:800;margin:0;text-wrap:balance;line-height:1.15}
+.sub{color:var(--muted);margin:4px 0 0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{font:600 .95rem var(--font);padding:10px 16px;border-radius:999px;border:2px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--yellow);color:var(--on-yellow);border-color:var(--yellow)}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.panel{display:flex;flex-direction:column;gap:16px}
+.fig{background:var(--surface);border-radius:16px;padding:12px;margin:0;overflow-x:auto}
+.fig svg{display:block;width:100%;height:auto;min-width:520px}
+figcaption{color:var(--muted);font-size:.85rem;padding:8px 6px 2px}
+.detail{background:var(--surface);border-radius:16px;padding:18px 20px;min-height:150px;display:flex;flex-direction:column;gap:8px}
+.detail h2{margin:0;font-size:1.25rem}
+.detail p{margin:0;max-width:65ch}
+.tag{display:inline-block;font:600 .75rem var(--font);letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;align-self:flex-start;color:var(--on-yellow)}
+.t-ci{background:var(--yellow)} .t-cd{background:var(--cyan)} .t-ops{background:var(--line);color:var(--fg)}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);font:500 .85rem var(--mono);padding:12px 14px;border-radius:10px;overflow-x:auto;white-space:pre}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:600 .95rem var(--font);padding:10px 18px;border-radius:10px;border:0;background:var(--fg);color:var(--bg);cursor:pointer}
+.btn.alt{background:transparent;color:var(--fg);border:2px solid var(--fg)}
+.btn:disabled{opacity:.4;cursor:default}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+label.chk{display:flex;gap:8px;align-items:center;font-size:.95rem}
+.node{cursor:pointer}
+.node text{font:600 13px var(--font);fill:var(--fg);pointer-events:none}
+.node.sel circle.main{stroke:var(--fg);stroke-width:4}
+.st{cursor:pointer}
+.st rect{transition:fill .25s,stroke .25s}
+.st text{pointer-events:none}
+.progress{font-size:.9rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header>
+    <h1>El ciclo DevOps, paso a paso</h1>
+    <p class="sub">Toca las etapas, avanza el flujo de Git y ejecuta un build de ejemplo. Ejemplo didáctico de integración continua.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Secciones">
+    <button class="tab" role="tab" id="tab-0" aria-selected="true" aria-controls="p0">Ciclo DevOps</button>
+    <button class="tab" role="tab" id="tab-1" aria-selected="false" aria-controls="p1">Flujo de Git</button>
+    <button class="tab" role="tab" id="tab-2" aria-selected="false" aria-controls="p2">Nuestro pipeline</button>
+  </div>
+
+  <!-- ===== 1. CICLO ===== -->
+  <section class="panel" id="p0" role="tabpanel" aria-labelledby="tab-0">
+    <div class="legend">
+      <span><i style="background:var(--yellow)"></i>Hoy: integración continua</span>
+      <span><i style="background:var(--cyan)"></i>Próxima clase: despliegue continuo</span>
+      <span><i style="background:var(--line)"></i>Operación</span>
+    </div>
+    <figure class="fig">
+      <svg id="loop" viewBox="0 0 800 340" role="img" aria-label="Ciclo DevOps en forma de infinito: plan, código, build y pruebas a la izquierda; release, despliegue, operación y monitoreo a la derecha"></svg>
+      <figcaption>El resultado de operar vuelve a Planear: por eso es un ciclo y no una línea.</figcaption>
+    </figure>
+    <div class="detail" id="d0" aria-live="polite"></div>
+  </section>
+
+  <!-- ===== 2. GIT ===== -->
+  <section class="panel" id="p1" role="tabpanel" aria-labelledby="tab-1" hidden>
+    <figure class="fig">
+      <svg id="git" viewBox="0 0 800 300" role="img" aria-label="Rama trunk con una rama feature que termina en un Pull Request y un merge"></svg>
+      <figcaption>Cada círculo es un commit. La rama feature se separa de trunk y vuelve solo si el Pull Request pasa.</figcaption>
+    </figure>
+    <div class="detail" aria-live="polite">
+      <span class="tag t-ci" id="gstep"></span>
+      <h2 id="gtitle"></h2>
+      <p id="gtext"></p>
+      <pre id="gcmd"></pre>
+    </div>
+    <div class="row">
+      <button class="btn alt" id="gprev">Anterior</button>
+      <button class="btn" id="gnext">Siguiente</button>
+      <button class="btn alt" id="greset">Reiniciar</button>
+    </div>
+  </section>
+
+  <!-- ===== 3. PIPELINE ===== -->
+  <section class="panel" id="p2" role="tabpanel" aria-labelledby="tab-2" hidden>
+    <figure class="fig">
+      <svg id="pipe" viewBox="0 0 800 190" role="img" aria-label="Seis estaciones del pipeline: preparar, análisis, build y pruebas, reportes, Quality Gate, empaquetar"></svg>
+      <figcaption>Las seis estaciones de azure_pipeline.yml en mi-microservicio.</figcaption>
+    </figure>
+    <div class="row">
+      <button class="btn" id="run">Ejecutar build</button>
+      <label class="chk"><input type="checkbox" id="fail"> Simular fallo en el Quality Gate</label>
+      <span class="progress" id="pstate" aria-live="polite"></span>
+    </div>
+    <div class="detail" aria-live="polite">
+      <span class="tag t-ci" id="ptag"></span>
+      <h2 id="ptitle"></h2>
+      <p id="ptext"></p>
+      <pre id="pcode"></pre>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;if(parent)parent.appendChild(e);return e}
+const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+/* ---------- Tabs ---------- */
+const tabs=[0,1,2].map(i=>$("tab-"+i));
+tabs.forEach((t,i)=>t.addEventListener("click",()=>{
+  tabs.forEach((x,j)=>{x.setAttribute("aria-selected",j===i);$("p"+j).hidden=j!==i});
+  try{history.replaceState(null,"","#"+["ciclo","git","pipeline"][i])}catch(e){}
+}));
+const h=(location.hash||"").slice(1);const start=["ciclo","git","pipeline"].indexOf(h);if(start>0)tabs[start].click();
+
+/* ---------- 1. Ciclo ---------- */
+const stages=[
+ {n:"Planear",k:"ci",t:0.62,d:"Se define qué se va a construir y por qué. Aquí nace cada historia de usuario o ajuste que luego termina en el repositorio.",ex:"Es lo que el equipo funcional y los líderes técnicos acuerdan antes de tocar código."},
+ {n:"Codificar",k:"ci",t:0.88,d:"El desarrollador escribe el cambio en una rama propia y lo sube al repositorio Git.",ex:"En el banco: una rama feature/* sobre el repositorio creado desde Kaizen."},
+ {n:"Compilar",k:"ci",t:1.12,d:"El pipeline toma el código, lo compila y deja un paquete reproducible. Si no compila, nadie más recibe ese cambio.",ex:"Gradle ejecuta clean build con Java 21 en el agente del pool Build."},
+ {n:"Probar",k:"ci",t:1.38,d:"Pruebas unitarias, cobertura, mutación y análisis de calidad corren solas en cada cambio.",ex:"JUnit, JaCoCo, Pitest y el Quality Gate de SonarQube."},
+ {n:"Liberar",k:"cd",t:1.62,d:"El artefacto que pasó todas las pruebas queda listo y versionado para ir a un ambiente.",ex:"Sale de Artifactory y se toma en el pipeline de Release. Es tema de la próxima clase."},
+ {n:"Desplegar",k:"cd",t:1.88,d:"El mismo artefacto se instala en cada ambiente, con aprobaciones donde haga falta.",ex:"Archivos k8s y pruebas de aceptación y rendimiento viajan junto al artefacto."},
+ {n:"Operar",k:"ops",t:0.12,d:"El servicio corriendo en producción, atendiendo clientes.",ex:"Quien opera y quien desarrolla miran el mismo servicio."},
+ {n:"Monitorear",k:"ops",t:0.38,d:"Se miden errores, tiempos y uso. Lo que se aprende vuelve a Planear.",ex:"Cierra el ciclo: cada incidente es un insumo para el próximo cambio."}
+];
+const colorOf={ci:"var(--yellow)",cd:"var(--cyan)",ops:"var(--line)"};
+const tagOf={ci:["t-ci","Hoy: integración continua"],cd:["t-cd","Próxima clase: despliegue continuo"],ops:["t-ops","Operación"]};
+const loop=$("loop"),cx=400,cy=170,a=330;
+function lem(t){const s=Math.sin(t),c=Math.cos(t),dn=1+s*s;return[cx+a*c/dn,cy+a*1.0*s*c/dn*1.35]}
+let pts="";for(let i=0;i<=200;i++){const p=lem(i/200*Math.PI*2);pts+=(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)}
+el("path",{d:pts+"Z",fill:"none",stroke:"var(--line)","stroke-width":10,"stroke-linecap":"round"},loop);
+const dot=el("circle",{r:7,fill:"var(--fg)"},loop);
+const nodes=stages.map((s,i)=>{
+  const p=lem(s.t*Math.PI),g=el("g",{class:"node",tabindex:0,role:"button","aria-label":s.n},loop);
+  el("circle",{class:"main",cx:p[0],cy:p[1],r:30,fill:colorOf[s.k],stroke:"var(--surface)","stroke-width":3},g);
+  el("text",{x:p[0],y:p[1]+4,"text-anchor":"middle",style:"fill:#2C2A29"},g,s.n);
+  const pick=()=>showStage(i);g.addEventListener("click",pick);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick()}});
+  return g});
+el("text",{x:cx-150,y:cy+4,"text-anchor":"middle",style:"font:800 15px var(--font);fill:var(--muted)"},loop,"DESARROLLO");
+el("text",{x:cx+150,y:cy+4,"text-anchor":"middle",style:"font:800 15px var(--font);fill:var(--muted)"},loop,"OPERACIONES");
+function showStage(i){
+  nodes.forEach((n,j)=>n.classList.toggle("sel",i===j));
+  const s=stages[i];
+  $("d0").innerHTML='<span class="tag '+tagOf[s.k][0]+'">'+tagOf[s.k][1]+'</span><h2>'+s.n+'</h2><p>'+s.d+'</p><p style="color:var(--muted)"><b>En nuestro caso:</b> '+s.ex+'</p>';
+}
+showStage(2);
+let t0=null;function spin(ts){if(t0==null)t0=ts;const p=lem(((ts-t0)/9000%1)*Math.PI*2);dot.setAttribute("cx",p[0]);dot.setAttribute("cy",p[1]);requestAnimationFrame(spin)}
+if(!reduce)requestAnimationFrame(spin);else{const p=lem(0);dot.setAttribute("cx",p[0]);dot.setAttribute("cy",p[1])}
+
+/* ---------- 2. Git ---------- */
+const gsteps=[
+ {t:"Traer el proyecto",x:"Clonas el repositorio: obtienes una copia completa con todo su historial. trunk es la rama principal y siempre debe funcionar.",c:"git clone <url-del-repositorio>\ncd mi-repositorio"},
+ {t:"Crear tu rama",x:"Trabajas aparte para no romper a nadie. Nace de trunk, donde estás parado.",c:"git switch -c feature/mi-cambio"},
+ {t:"Guardar el cambio",x:"Eliges qué entra con add y lo guardas con commit, que es una foto del proyecto con un mensaje.",c:"git add .\ngit commit -m \"Corrige cálculo de débitos forzados\""},
+ {t:"Subir la rama",x:"Tu commit sigue solo en tu equipo. Con push viaja al repositorio del banco.",c:"git push -u origin feature/mi-cambio"},
+ {t:"Abrir el Pull Request",x:"Pides que tu rama entre a trunk. La política de build lanza el pipeline automáticamente sobre tu cambio.",c:"Azure DevOps → Repos → Pull requests → New pull request"},
+ {t:"Revisión y checks",x:"Compañeros revisan el código y el pipeline debe quedar en verde. Si algo falla, corriges y haces push: el PR se actualiza solo.",c:"Políticas: build validation + revisores requeridos"},
+ {t:"Merge a trunk",x:"Con todo aprobado, tu cambio entra a trunk. La rama feature ya cumplió su trabajo.",c:"Complete → Merge"},
+ {t:"El CI corre sobre trunk",x:"Otro build se ejecuta sobre trunk y deja el artefacto listo en Artifactory. Aquí termina la integración continua y empieza el despliegue.",c:"trigger: trunk → build → Artifactory"}
+];
+let gi=0;const git=$("git");
+function gdraw(){
+  git.innerHTML="";
+  const y0=90,y1=210,X=i=>70+i*95;
+  el("defs",{},git).innerHTML='<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>';
+  el("text",{x:20,y:y0-28,style:"font:800 13px var(--font);fill:var(--muted)"},git,"trunk");
+  const mergeAt=gi>=6;
+  const endTrunk=mergeAt?X(6):X(2);
+  el("line",{x1:X(0),y1:y0,x2:endTrunk,y2:y0,stroke:"var(--fg)","stroke-width":4},git);
+  [0,1,2].forEach(i=>el("circle",{cx:X(i),cy:y0,r:13,fill:"var(--fg)"},git));
+  if(gi>=1){
+    el("text",{x:X(3),y:y1+38,style:"font:800 13px var(--font);fill:var(--muted)"},git,"feature/mi-cambio");
+    const fEnd=gi>=2?X(5):X(3);
+    el("path",{d:"M"+X(2)+" "+y0+" C "+(X(2)+40)+" "+y0+" "+(X(2)+30)+" "+y1+" "+(X(3)-10)+" "+y1,fill:"none",stroke:"var(--yellow)","stroke-width":4},git);
+    el("line",{x1:X(3)-10,y1:y1,x2:gi>=2?(gi>=3?X(4):X(3)):X(3)-10,y2:y1,stroke:"var(--yellow)","stroke-width":4},git);
+    el("circle",{cx:X(3)-10,cy:y1,r:6,fill:"var(--yellow)"},git);
+  }
+  if(gi>=2){el("circle",{cx:X(4),cy:y1,r:14,fill:"var(--yellow)",stroke:"var(--fg)","stroke-width":3},git);
+    el("text",{x:X(4),y:y1+34,"text-anchor":"middle",style:"font:600 12px var(--font);fill:var(--fg)"},git,"tu commit");}
+  if(gi>=3){el("path",{d:"M"+X(4)+" "+(y1-18)+" L"+(X(4)+60)+" "+(y1-70),stroke:"currentColor","stroke-width":2,"stroke-dasharray":"5 4","marker-end":"url(#ar)",fill:"none",style:"color:var(--fg)"},git);
+    el("rect",{x:X(4)+55,y:y1-110,width:120,height:38,rx:10,fill:"var(--surface)",stroke:"var(--fg)","stroke-width":2},git);
+    el("text",{x:X(4)+115,y:y1-86,"text-anchor":"middle",style:"font:600 13px var(--font);fill:var(--fg)"},git,"origin (banco)");}
+  if(gi>=4&&gi<6){
+    el("rect",{x:X(5)+30,y:y0+30,width:150,height:56,rx:12,fill:"var(--purple)"},git);
+    el("text",{x:X(5)+105,y:y0+54,"text-anchor":"middle",style:"font:800 14px var(--font);fill:#fff"},git,"Pull Request");
+    el("text",{x:X(5)+105,y:y0+74,"text-anchor":"middle",style:"font:600 12px var(--font);fill:#fff"},git,gi>=5?"build ✔  revisión ✔":"build corriendo…");
+  }
+  if(mergeAt){
+    el("path",{d:"M"+X(4)+" "+y1+" C "+(X(5)+40)+" "+y1+" "+(X(5)+10)+" "+y0+" "+X(6)+" "+y0,fill:"none",stroke:"var(--green)","stroke-width":4,"stroke-dasharray":"2 0"},git);
+    el("circle",{cx:X(6),cy:y0,r:16,fill:"var(--green)",stroke:"var(--fg)","stroke-width":3},git);
+    el("text",{x:X(6),y:y0-26,"text-anchor":"middle",style:"font:600 12px var(--font);fill:var(--fg)"},git,"merge");
+  }
+  if(gi>=7){el("rect",{x:X(6)+36,y:y0-22,width:134,height:44,rx:10,fill:"var(--cyan)"},git);
+    el("text",{x:X(6)+103,y:y0-4,"text-anchor":"middle",style:"font:800 13px var(--font);fill:#2C2A29"},git,"CI en trunk");
+    el("text",{x:X(6)+103,y:y0+13,"text-anchor":"middle",style:"font:600 11px var(--font);fill:#2C2A29"},git,"→ Artifactory");}
+  const s=gsteps[gi];
+  $("gstep").textContent="Paso "+(gi+1)+" de "+gsteps.length;$("gtitle").textContent=s.t;$("gtext").textContent=s.x;$("gcmd").textContent=s.c;
+  $("gprev").disabled=gi===0;$("gnext").disabled=gi===gsteps.length-1;
+}
+$("gnext").onclick=()=>{if(gi<gsteps.length-1){gi++;gdraw()}};
+$("gprev").onclick=()=>{if(gi>0){gi--;gdraw()}};
+$("greset").onclick=()=>{gi=0;gdraw()};
+gdraw();
+
+/* ---------- 3. Pipeline ---------- */
+const st=[
+ {n:"Preparar",d:"Baja solo el último commit del repositorio y deja listo Java 21 en el agente.",c:"- checkout: self\n  fetchDepth: 1\n- task: JavaToolInstaller@0\n  inputs: { versionSpec: '21' }"},
+ {n:"Análisis",d:"Le avisa a SonarQube que va a empezar el análisis de este proyecto.",c:"- task: SonarQubePrepare@7"},
+ {n:"Build y pruebas",d:"Gradle compila, corre las pruebas unitarias y consolida la cobertura.",c:"- task: Gradle@4\n  inputs:\n    tasks: 'clean build jacocoMergedReport'"},
+ {n:"Reportes",d:"Publica el reporte de mutación (Pitest) y la cobertura para verlos en el build.",c:"- task: PublishCodeCoverageResults@..."},
+ {n:"Quality Gate",d:"Si el código no cumple los umbrales de calidad, el build se detiene aquí y nada se publica.",c:"- task: Sonar-buildbreaker@8\n  displayName: 'Quality Gate'"},
+ {n:"Empaquetar",d:"Reúne el JAR, el Dockerfile y los archivos k8s, los comprime y los sube a Artifactory.",c:"- task: CopyFiles@2\n- task: ArchiveFiles@2\n- task: ArtifactoryGenericUpload@..."}
+];
+const pipe=$("pipe");let sel=2,running=false;const boxes=[];
+const W=118,GAP=18,X0=(800-(6*W+5*GAP))/2;
+st.forEach((s,i)=>{
+  const x=X0+i*(W+GAP),g=el("g",{class:"st",tabindex:0,role:"button","aria-label":s.n},pipe);
+  const r=el("rect",{x:x,y:40,width:W,height:100,rx:14,fill:"var(--surface)",stroke:"var(--fg)","stroke-width":2.5},g);
+  el("text",{x:x+W/2,y:72,"text-anchor":"middle",style:"font:800 22px var(--font);fill:var(--muted)"},g,String(i+1));
+  const tx=el("text",{x:x+W/2,y:104,"text-anchor":"middle",style:"font:600 13px var(--font);fill:var(--fg)"},g);
+  const words=s.n.split(" ");if(words.length>1){el("tspan",{x:x+W/2,dy:0},tx,words[0]);el("tspan",{x:x+W/2,dy:16},tx,words.slice(1).join(" "))}else tx.textContent=s.n;
+  if(i<5)el("line",{x1:x+W+2,y1:90,x2:x+W+GAP-2,y2:90,stroke:"var(--fg)","stroke-width":2.5},pipe);
+  const pick=()=>{if(!running){sel=i;info(i);paint()}};
+  g.addEventListener("click",pick);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick()}});
+  boxes.push(r)});
+const paintState=[];// "", ok, fail, run, skip
+function paint(){boxes.forEach((r,i)=>{
+  const s=paintState[i]||"";
+  r.setAttribute("fill",s==="ok"?"var(--green)":s==="fail"?"var(--red)":s==="run"?"var(--yellow)":"var(--surface)");
+  r.setAttribute("stroke-dasharray",s==="skip"?"6 5":"0");
+  r.setAttribute("stroke-width",(i===sel&&!running)?5:2.5);
+  r.setAttribute("opacity",s==="skip"?.45:1)})}
+function info(i){const s=st[i];$("ptag").textContent="Estación "+(i+1);$("ptitle").textContent=s.n;$("ptext").textContent=s.d;$("pcode").textContent=s.c}
+const wait=ms=>new Promise(r=>setTimeout(r,reduce?Math.min(ms,120):ms));
+$("run").onclick=async()=>{
+  if(running)return;running=true;$("run").disabled=true;$("fail").disabled=true;
+  paintState.length=0;paint();$("pstate").textContent="Build en curso…";
+  const fail=$("fail").checked;let broke=false;
+  for(let i=0;i<st.length;i++){
+    info(i);paintState[i]="run";paint();await wait(750);
+    if(fail&&i===4){paintState[i]="fail";broke=true;
+      for(let j=5;j<st.length;j++)paintState[j]="skip";paint();
+      $("ptag").textContent="Build detenido";$("ptitle").textContent="Quality Gate: Failed";
+      $("ptext").textContent="El análisis encontró algo bajo el umbral. No se empaqueta ni se sube nada a Artifactory, así que el problema no llega a ningún ambiente.";
+      $("pcode").textContent="El PR queda bloqueado hasta que corrijas y hagas push.";break}
+    paintState[i]="ok";paint()}
+  if(!broke){$("ptag").textContent="Build terminado";$("ptitle").textContent="Artefacto publicado";
+    $("ptext").textContent="Todo en verde: el artefacto quedó en Artifactory y está listo para el despliegue de la próxima clase.";$("pcode").textContent="appArtifact · k8s · acceptanceTest · performanceTest"}
+  $("pstate").textContent=broke?"Falló en Quality Gate":"Build exitoso";
+  running=false;$("run").disabled=false;$("fail").disabled=false;paint()};
+info(2);paint();
+})();
+</script>
+
+</body></html>
