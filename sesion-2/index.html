@@ -1,319 +1,222 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Despliegue Continuo Interactivo</title>
+<title>El Release en Juego</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap">
 <style>
 [hidden]{display:none!important}
-/* Layout: cabecera + 3 pestañas. Ciclo = bucle SVG; Release = línea de stages + detalle; Configuración = selector + lista */
 :root{
   --bg:#F4F5F5; --surface:#FFFFFF; --fg:#2C2A29; --muted:#55524F; --line:#D5D6D6;
-  --yellow:#FDC82F; --cyan:#29C1E0; --green:#3A9E6F; --purple:#7A5CC4; --amber:#B7791F;
-  --on-yellow:#2C2A29; --code-bg:#2C2A29; --code-fg:#F4F5F5;
+  --yellow:#FDC82F; --cyan:#29C1E0; --green:#3A9E6F; --purple:#7A5CC4; --red:#D8242B;
+  --on-yellow:#2C2A29; --on-color:#FFFFFF;
   --font:"Figtree",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#1E1D1C; --surface:#2C2A29; --fg:#F4F5F5; --muted:#B9B8B6; --line:#4A4745;
-  --green:#4DBB88; --purple:#9C84DD; --amber:#E0A74A; --code-bg:#171615; color-scheme:dark}}
+  --green:#4DBB88; --purple:#9C84DD; --red:#F0575D; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#1E1D1C; --surface:#2C2A29; --fg:#F4F5F5; --muted:#B9B8B6; --line:#4A4745;
-  --green:#4DBB88; --purple:#9C84DD; --amber:#E0A74A; --code-bg:#171615; color-scheme:dark}
+  --green:#4DBB88; --purple:#9C84DD; --red:#F0575D; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--font);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px;line-height:1.5}
-.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
-h1{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:800;margin:0;text-wrap:balance;line-height:1.15}
-.sub{color:var(--muted);margin:4px 0 0;font-size:1rem}
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tab,.chip{font:600 .95rem var(--font);padding:10px 16px;border-radius:999px;border:2px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
-.tab[aria-selected="true"],.chip[aria-pressed="true"]{background:var(--yellow);color:var(--on-yellow);border-color:var(--yellow)}
-.chip{padding:8px 14px;font-size:.9rem}
-button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
-.panel{display:flex;flex-direction:column;gap:16px}
-.fig{background:var(--surface);border-radius:16px;padding:12px;margin:0;overflow-x:auto}
-.fig svg{display:block;width:100%;height:auto;min-width:520px}
-figcaption{color:var(--muted);font-size:.85rem;padding:8px 6px 2px}
-.detail{background:var(--surface);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.detail h2{margin:0;font-size:1.3rem}
-.detail p{margin:0;max-width:68ch}
-.tag{display:inline-block;font:600 .75rem var(--font);letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;align-self:flex-start;color:var(--on-yellow)}
-.t-ci{background:var(--yellow)} .t-cd{background:var(--cyan)} .t-ops{background:var(--line);color:var(--fg)}
-.t-dev{background:var(--cyan)} .t-qa{background:var(--yellow)} .t-oc{background:var(--purple);color:#fff} .t-pdn{background:var(--green);color:#fff}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
-.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.top h1{margin:0;font-size:clamp(1.3rem,3.4vw,1.8rem);font-weight:800}
+.score{font:500 .95rem var(--mono);color:var(--muted)}
+.score b{color:var(--fg)}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dots i{width:22px;height:8px;border-radius:4px;background:var(--line)}
+.dots i.now{background:var(--yellow)} .dots i.ok{background:var(--green)} .dots i.no{background:var(--red)}
+.card{background:var(--surface);border-radius:20px;padding:clamp(18px,3vw,32px);display:flex;flex-direction:column;gap:20px}
+.kick{font:600 .78rem var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.kick .tag{background:var(--cyan);color:var(--on-yellow);padding:3px 10px;border-radius:999px}
+.q{margin:0;font-size:clamp(1.4rem,3.6vw,2.2rem);font-weight:800;line-height:1.2;text-wrap:balance}
+.ctx{margin:0;color:var(--muted);font-size:1.05rem;max-width:62ch}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}
+.opt{position:relative;border:2px solid var(--fg);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.opt .main{all:unset;box-sizing:border-box;cursor:pointer;padding:14px 16px 10px;display:flex;gap:12px;align-items:flex-start;font-size:1.1rem;font-weight:600;min-width:0}
+.opt .main:focus-visible{outline:3px solid var(--cyan);outline-offset:-3px}
+.opt .k{flex:none;font:800 1rem var(--font);width:30px;height:30px;border-radius:8px;background:var(--fg);color:var(--bg);display:grid;place-items:center}
+.opt .t{min-width:0;overflow-wrap:anywhere}
+.opt .meter{display:flex;align-items:center;gap:10px;padding:0 16px 12px;font:500 .95rem var(--mono);color:var(--muted)}
+.opt .bar{flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.opt .bar span{display:block;height:100%;width:0;background:var(--fg);transition:width .5s}
+.opt .minus{font:600 .85rem var(--font);border:1.5px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;padding:2px 9px;cursor:pointer}
+.opt.right{border-color:var(--green);background:color-mix(in srgb,var(--green) 14%,var(--surface))}
+.opt.right .k{background:var(--green);color:#fff}
+.opt.right .bar span{background:var(--green)}
+.opt.wrong{opacity:.6}
+.opt.wrong .bar span{background:var(--red)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.btn{font:600 .95rem var(--font);padding:10px 18px;border-radius:10px;border:0;background:var(--fg);color:var(--bg);cursor:pointer}
+.btn{font:600 1rem var(--font);padding:12px 22px;border-radius:12px;border:0;background:var(--fg);color:var(--bg);cursor:pointer}
 .btn.alt{background:transparent;color:var(--fg);border:2px solid var(--fg)}
+.btn.go{background:var(--yellow);color:var(--on-yellow)}
 .btn:disabled{opacity:.4;cursor:default}
-.progress{font-size:.9rem;color:var(--muted)}
-.node{cursor:pointer}
-.node text{font:600 13px var(--font);fill:#2C2A29;pointer-events:none}
-.node.sel circle.main{stroke:var(--fg);stroke-width:4}
-/* release */
-.lanes{display:flex;flex-direction:column;gap:14px}
-.lane{background:var(--surface);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
-.lane h3{margin:0;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
-.lane h3 i{width:12px;height:12px;border-radius:50%;display:inline-block}
-.stages{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
-.stg{font:600 .9rem var(--font);padding:9px 13px;border-radius:10px;border:2px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer;text-align:left;display:flex;gap:8px;align-items:center}
-.stg[aria-pressed="true"]{outline:3px solid var(--cyan);outline-offset:1px}
-.stg.run{background:var(--yellow);color:var(--on-yellow);border-color:var(--yellow)}
-.stg.ok{background:var(--green);color:#fff;border-color:var(--green)}
-.stg.wait{background:var(--purple);color:#fff;border-color:var(--purple)}
-.par{border:2px dashed var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px}
-.par small{color:var(--muted);font-size:.75rem}
-.man{font-size:.7rem;font-weight:800;letter-spacing:.04em;background:var(--purple);color:#fff;border-radius:6px;padding:1px 6px}
-.tasks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
-.tasks li{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;border-top:1px solid var(--line);padding-top:8px}
-.tasks b{font-size:.98rem}
-.tasks span{color:var(--muted);font-size:.92rem}
-.job{font:600 .72rem var(--font);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:4px}
-.gate{background:var(--surface);border:2px solid var(--purple);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.grp{border-top:2px solid var(--fg);padding-top:8px;min-width:0}
-.grp b{display:block;font-size:.95rem;overflow-wrap:anywhere}
-.grp span{color:var(--muted);font-size:.85rem}
-.grp.off{opacity:.35}
-.note{color:var(--muted);font-size:.9rem}
+button:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.hint{color:var(--muted);font-size:.9rem}
+.why{border-left:6px solid var(--green);padding:4px 0 4px 16px;display:flex;flex-direction:column;gap:6px}
+.why.miss{border-color:var(--red)}
+.why h2{margin:0;font-size:1.2rem}
+.why p{margin:0;max-width:66ch;font-size:1.05rem}
+.why .src{font:500 .85rem var(--mono);color:var(--muted)}
+/* ordenar */
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{font:600 1rem var(--font);padding:11px 16px;border-radius:12px;border:2px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+.chip:disabled{opacity:.35;cursor:default}
+.chip.bad{border-color:var(--red);background:color-mix(in srgb,var(--red) 18%,var(--surface))}
+.line{display:flex;flex-direction:column;gap:8px;counter-reset:s}
+.slot{counter-increment:s;display:flex;gap:12px;align-items:center;border:2px dashed var(--line);border-radius:12px;padding:10px 14px;min-height:46px;font-weight:600}
+.slot::before{content:counter(s);font:500 .9rem var(--mono);color:var(--muted);width:22px}
+.slot.on{border:2px solid var(--green);background:color-mix(in srgb,var(--green) 14%,var(--surface))}
+.slot em{font-style:normal;font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+/* final */
+.big{font-size:clamp(2.6rem,9vw,5rem);font-weight:800;line-height:1}
+.miss-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.miss-list li{border-top:1px solid var(--line);padding-top:10px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 </head><body>
 <div class="wrap">
-  <header>
-    <h1>Despliegue continuo, paso a paso</h1>
-    <p class="sub">Recorre el release de ms_pocket_balance_forced_debits por DEV, QA y PDN. Sesión 2: despliegue continuo.</p>
-  </header>
-
-  <div class="tabs" role="tablist" aria-label="Secciones">
-    <button class="tab" role="tab" id="tab-0" aria-selected="true" aria-controls="p0">Ciclo DevOps</button>
-    <button class="tab" role="tab" id="tab-1" aria-selected="false" aria-controls="p1">El release</button>
-    <button class="tab" role="tab" id="tab-2" aria-selected="false" aria-controls="p2">Configuración</button>
+  <div class="top">
+    <h1>El release en juego</h1>
+    <div class="score" id="score" aria-live="polite"></div>
   </div>
-
-  <section class="panel" id="p0" role="tabpanel" aria-labelledby="tab-0">
-    <div class="legend">
-      <span><i style="background:var(--yellow)"></i>Sesión 1: integración continua</span>
-      <span><i style="background:var(--cyan)"></i>Hoy: despliegue continuo</span>
-      <span><i style="background:var(--line)"></i>Operación</span>
-    </div>
-    <figure class="fig">
-      <svg id="loop" viewBox="0 0 800 340" role="img" aria-label="Ciclo DevOps en forma de infinito"></svg>
-      <figcaption>Toca una etapa. Lo que aprendemos al operar vuelve a Planear.</figcaption>
-    </figure>
-    <div class="detail" id="d0" aria-live="polite"></div>
-  </section>
-
-  <section class="panel" id="p1" role="tabpanel" aria-labelledby="tab-1" hidden>
-    <div class="row">
-      <button class="btn" id="sim">Simular release</button>
-      <button class="btn alt" id="simreset" hidden>Reiniciar</button>
-      <span class="progress" id="simstate" aria-live="polite">Toca un stage para ver qué hace, o simula el recorrido.</span>
-    </div>
-    <div class="gate" id="gate" hidden>
-      <span id="gatetxt"></span>
-      <button class="btn" id="gateok">Aprobar y continuar</button>
-    </div>
-    <div class="lanes" id="lanes"></div>
-    <div class="detail" id="d1" aria-live="polite"></div>
-    <p class="note">El orden sale de la pestaña Retention y del diagrama de pruebas E2E del release. Los stages con esta marca <span class="man">MANUAL</span> se detienen hasta que una persona responde.</p>
-  </section>
-
-  <section class="panel" id="p2" role="tabpanel" aria-labelledby="tab-2" hidden>
-    <div class="row" role="group" aria-label="Configuración del release" id="cfgchips"></div>
-    <div class="detail" id="d2" aria-live="polite"></div>
-  </section>
+  <div class="dots" id="dots" aria-hidden="true"></div>
+  <main class="card" id="stage" aria-live="polite"></main>
 </div>
 
 <script>
 (function(){
-var NS="http://www.w3.org/2000/svg";
-function $(id){return document.getElementById(id)}
-function el(tag,attrs,parent,text){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;if(parent)parent.appendChild(e);return e}
+function $(i){return document.getElementById(i)}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 var reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
 
-/* ---------- Tabs ---------- */
-var names=["ciclo","release","config"],tabs=[0,1,2].map(function(i){return $("tab-"+i)});
-function openTab(i){tabs.forEach(function(x,j){x.setAttribute("aria-selected",j===i);$("p"+j).hidden=j!==i});try{history.replaceState(null,"","#"+names[i])}catch(e){}}
-tabs.forEach(function(t,i){t.addEventListener("click",function(){openTab(i)})});
-var start=names.indexOf((location.hash||"").slice(1));if(start>0)openTab(start);
-
-/* ---------- 1. Ciclo ---------- */
-var stages=[
- {n:"Planear",k:"ci",t:0.62,d:"Se define qué se va a construir y por qué. De aquí sale cada cambio que termina en el repositorio.",ex:"Lo acuerdan el equipo funcional y los líderes técnicos antes de tocar código."},
- {n:"Codificar",k:"ci",t:0.88,d:"El desarrollador escribe el cambio en una rama propia y lo sube a Git.",ex:"Una rama feature, como feature/movementDownload."},
- {n:"Compilar",k:"ci",t:1.12,d:"El pipeline de build compila el código y deja un paquete reproducible.",ex:"Es el pipeline de CI de la sesión 1."},
- {n:"Probar",k:"ci",t:1.38,d:"Pruebas unitarias, cobertura y análisis de calidad corren solas en cada cambio.",ex:"Parte de lo que vimos en la sesión 1."},
- {n:"Liberar",k:"cd",t:1.62,d:"El build que pasó queda disponible como artefacto para crear un release.",ex:"El release toma por defecto la última versión de la rama trunk, por ejemplo trunk.20261016.1."},
- {n:"Desplegar",k:"cd",t:1.88,d:"El release lleva el cambio ambiente por ambiente, con pruebas y pausas manuales antes de producción.",ex:"DEV, QA (CER) y PDN. Lo recorremos en la pestaña El release."},
- {n:"Operar",k:"ops",t:0.12,d:"El servicio corriendo en producción, atendiendo clientes.",ex:"Quien opera y quien desarrolla miran el mismo servicio."},
- {n:"Monitorear",k:"ops",t:0.38,d:"Se miden errores, tiempos y uso. Lo que se aprende vuelve a Planear.",ex:"Cierra el ciclo."}
+/* Cada pregunta sale de lo que se vio en el release real. src = pestaña de donde sale. */
+var Q=[
+ {t:"Pipeline",q:"Se crea un release nuevo. ¿Qué pasa primero, sin que nadie haga nada?",
+  o:["Arranca Deploy DEV","Espera la aprobación del líder","Corren las pruebas E2E","Se despliega en PDN"],a:0,
+  w:"Deploy DEV tiene el trigger «After release» y no tiene aprobaciones ni gates. Apenas existe el release, arranca.",src:"Deploy DEV → Pre-deployment conditions"},
+ {t:"Pipeline",q:"El Release-139 se disparó el 6/10/2026. ¿Cómo?",
+  o:["Por un horario programado","Alguien lo creó a mano","Lo disparó el gate de calidad","Lo disparó el equipo de PDN"],a:1,
+  w:"El pipeline no tiene schedule. En el Release-139 el disparo fue manual: alguien lo crea cuando quiere desplegar.",src:"Pipeline → Artifacts"},
+ {t:"Artefactos",q:"Nadie elige versión. ¿Qué build toma el release por defecto?",
+  o:["El más antiguo","El último de la rama trunk","El de la rama que se tocó más reciente","El que esté ya en QA"],a:1,
+  w:"La versión por defecto es «latest from branch trunk», por ejemplo trunk.20261016.1. Los releases 145 y 146 salieron de feature/movementDownload porque alguien eligió esa rama.",src:"Pipeline → Artifacts"},
+ {t:"QA (CER)",q:"Son 4 stages de pruebas E2E. ¿Cómo corren?",
+  o:["Uno tras otro, en fila","En paralelo","Solo si el líder aprueba","Solo en PDN"],a:1,
+  w:"E2E MQ Process Messages, AWS ProcessFile S3, RetryAnnulments y PostBalanceRunner salen en paralelo en el diagrama del pipeline.",src:"Pipeline → diagrama"},
+ {t:"Paso a PDN",q:"¿Qué stage frena el release hasta que el líder de componente apruebe?",
+  o:["Acceptance Test CER","Create OC","Performance Test CER","Deploy DEV"],a:1,
+  w:"Create OC tiene un job agentless con una Manual Intervention: «Aprobación de líder de componente». Antes compara variables del release y después genera la orden de cambio.",src:"Tasks → Create OC"},
+ {t:"Paso a PDN",q:"Una Manual Intervention pausa el release esperando a una persona. ¿Qué tipo de job la hace posible?",
+  o:["Un agent job normal","Un agentless job (corre en el servidor)","Un job de Docker","Un job de Gradle"],a:1,
+  w:"Se pone en un agentless job: corre en el servidor de Azure DevOps y no ocupa un agente mientras espera. Así lo usan Create OC, Smoke Test y User Validation.",src:"Tasks → Create OC / Smoke Test / User Validation"},
+ {t:"Variables",q:"¿Cuál de estos grupos de variables aplica solo al stage Deploy PDN?",
+  o:["base_images","bolsillos-security-istio-pdn","nu6560001_Pockets_MR_variables_dev","bolsillos_variables_mqi_qa"],a:1,
+  w:"base_images tiene alcance «Release» (todo el pipeline). Los _dev son de Deploy DEV y los _qa de Deploy CER. Para Deploy PDN solo está bolsillos-security-istio-pdn.",src:"Variables → Variable groups"},
+ {t:"Retention",q:"¿Cuánto tiempo se guardan los releases?",
+  o:["30 días","90 días","730 días, con mínimo 25 releases","Para siempre"],a:2,
+  w:"Retención de 730 días, mínimo 25 releases, con sus artefactos asociados. Es igual en todos los stages.",src:"Retention"},
+ {t:"Options",q:"El último release listado es el Release-148. ¿Cómo se llama el siguiente?",
+  o:["Release-149","Release-1","148.1","20261020.1"],a:0,
+  w:"El formato es Release-$(rev:r). El rev:r es un contador que sube de uno en uno con cada release.",src:"Options → Release name format"},
+ {t:"Debate",q:"Este release, ¿es Continuous Delivery o Continuous Deployment?",
+  ctx:"Mira dónde hay personas en el camino antes de llegar a producción. Aquí se vota y se discute.",
+  o:["Delivery: una persona autoriza el paso a producción","Deployment: todo es automático hasta PDN"],a:0,
+  w:"Hasta QA todo corre solo. Para pasar a PDN hay una persona: la aprobación del líder en Create OC. Después de Deploy PDN hay otras dos pausas manuales, Smoke Test y User Validation. Se parece más a Continuous Delivery.",src:"Tasks + Pipeline"}
 ];
-var colorOf={ci:"var(--yellow)",cd:"var(--cyan)",ops:"var(--line)"};
-var tagOf={ci:["t-ci","Sesión 1: integración continua"],cd:["t-cd","Hoy: despliegue continuo"],ops:["t-ops","Operación"]};
-var loop=$("loop"),cx=400,cy=170,a=330;
-function lem(t){var s=Math.sin(t),c=Math.cos(t),dn=1+s*s;return[cx+a*c/dn,cy+a*s*c/dn*1.35]}
-var pts="";for(var i=0;i<=200;i++){var p=lem(i/200*Math.PI*2);pts+=(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)}
-el("path",{d:pts+"Z",fill:"none",stroke:"var(--line)","stroke-width":10,"stroke-linecap":"round"},loop);
-var dot=el("circle",{r:7,fill:"var(--fg)"},loop);
-var nodes=stages.map(function(s,i){
-  var p=lem(s.t*Math.PI),g=el("g",{"class":"node",tabindex:0,role:"button","aria-label":s.n},loop);
-  el("circle",{"class":"main",cx:p[0],cy:p[1],r:30,fill:colorOf[s.k],stroke:"var(--surface)","stroke-width":3},g);
-  el("text",{x:p[0],y:p[1]+4,"text-anchor":"middle"},g,s.n);
-  function pick(){showStage(i)}
-  g.addEventListener("click",pick);g.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();pick()}});
-  return g});
-el("text",{x:cx-150,y:cy+4,"text-anchor":"middle",style:"font:800 15px var(--font);fill:var(--muted)"},loop,"DESARROLLO");
-el("text",{x:cx+150,y:cy+4,"text-anchor":"middle",style:"font:800 15px var(--font);fill:var(--muted)"},loop,"OPERACIONES");
-function showStage(i){
-  nodes.forEach(function(n,j){n.classList.toggle("sel",i===j)});
-  var s=stages[i];
-  $("d0").innerHTML='<span class="tag '+tagOf[s.k][0]+'">'+tagOf[s.k][1]+'</span><h2>'+s.n+'</h2><p>'+s.d+'</p><p style="color:var(--muted)"><b>En nuestro caso:</b> '+s.ex+'</p>';
+var ORDER=[["Deploy DEV",""],["Deploy CER","QA"],["Acceptance Test CER","QA"],["SRE","QA"],["4 stages E2E","en paralelo"],["Security E2E","QA"],["Performance Test CER","QA"],["Create OC","manual"],["Deploy PDN","PDN"],["Smoke Test","manual"],["User Validation","manual"]];
+var N=Q.length+1; /* + ronda de ordenar */
+
+var st={i:0,votes:Q.map(function(q){return q.o.map(function(){return 0})}),shown:Q.map(function(){return false}),
+  ord:{pos:0,errs:0,done:false,seed:null}};
+function total(i){return st.votes[i].reduce(function(a,b){return a+b},0)}
+function winner(i){var v=st.votes[i],m=Math.max.apply(null,v);if(!m)return -1;var w=v.indexOf(m);return v.filter(function(x){return x===m}).length>1?-1:w}
+function hit(i){return st.shown[i]&&winner(i)===Q[i].a}
+
+function dots(){
+  $("dots").innerHTML=Array.apply(null,{length:N}).map(function(_,i){
+    var c="";if(i===st.i)c="now";else if(i<Q.length&&st.shown[i])c=hit(i)?"ok":"no";else if(i===Q.length&&st.ord.done)c=st.ord.errs?"no":"ok";
+    return '<i class="'+c+'"></i>'}).join("");
+  var ok=0,sh=0;Q.forEach(function(_,i){if(st.shown[i]){sh++;if(hit(i))ok++}});
+  $("score").innerHTML="La sala: <b>"+ok+"</b> de "+sh+" acertadas";
 }
-showStage(5);
-var t0=null;function spin(ts){if(t0==null)t0=ts;var p=lem(((ts-t0)/9000%1)*Math.PI*2);dot.setAttribute("cx",p[0]);dot.setAttribute("cy",p[1]);requestAnimationFrame(spin)}
-if(!reduce)requestAnimationFrame(spin);else{var p0=lem(0);dot.setAttribute("cx",p0[0]);dot.setAttribute("cy",p0[1])}
 
-/* ---------- 2. Release ---------- */
-var S={ /* id: datos del stage */
- dev:{n:"Deploy DEV",env:"dev",why:"Toma el build, arma la imagen de Docker y la aplica en Kubernetes en DEV.",
-  trig:"Trigger After release: arranca solo apenas se crea el release. Aprobaciones, gates y redespliegue automático están desactivados, antes y después.",
-  jobs:[["Agent job",[
-   ["Replace tokens in Dockerfile","El Dockerfile trae marcadores en lugar de valores fijos. Replace Tokens los cambia por las variables de DEV."],
-   ["Print Dockerfile","Muestra el archivo en el log para revisar cómo quedó."],
-   ["Build image","Docker construye la imagen."],
-   ["Push image","Sube la imagen al registro."],
-   ["Remove local image","Borra la copia local del agente para no dejar residuos."],
-   ["Replace tokens in YAML","Lo mismo con los YAML de Kubernetes."],
-   ["Print YAMLS","Los muestra en el log para revisarlos."],
-   ["kubectl apply app-v2","Aplica el manifiesto de la aplicación."],
-   ["kubectl apply configmap","Aplica la configuración."],
-   ["kubectl apply gateway external","Aplica la entrada externa."],
-   ["kubectl apply security","Aplica los manifiestos de seguridad."]]]],
-  foot:"El diagrama de la pestaña Pipeline marca 13 tasks y aquí se listan las 11 que se ven en la pestaña Tasks."},
- cer:{n:"Deploy CER",env:"qa",why:"Despliega en QA. En el pipeline la etapa se llama CER.",
-  trig:"Variable groups con alcance Deploy CER: nu6560001_Pockets_MR_variables_qa, bolsillos_variables_mqi_qa, bolsillos-security-istio-qa y Nu6560001_BolsillosCloud_Service_Redis_qa.",
-  jobs:[["Agent job",[["14 tasks","El diagrama de la pestaña Pipeline marca 14 tasks. Se abren en vivo en la pestaña Tasks."]]]]},
- acc:{n:"Acceptance Test CER",env:"qa",why:"Con el servicio desplegado en QA, corre las pruebas de aceptación.",
-  jobs:[["Agent job",[
-   ["Replace tokens","Llena la configuración de las pruebas con los valores del ambiente."],
-   ["Gradle Build Acceptance Test","Construye con Gradle el proyecto de pruebas de aceptación."],
-   ["Use Node 20.x","Deja Node 20 disponible en el agente."],
-   ["Publish Cucumber Report","Publica el reporte de Cucumber, con los escenarios que pasaron y los que fallaron."],
-   ["AutomationUse","Tarea de la extensión AutomationUse, entre el reporte de Cucumber y el reporte final."],
-   ["Reporte RC","Publica un reporte HTML con el resultado."]]]]},
- sre:{n:"SRE",env:"qa",why:"Cuatro tareas del tipo Continuous Resilience, una detrás de otra.",
-  jobs:[["Agent job",[
-   ["SRE ADA","Continuous Resilience"],["SRE RH","Continuous Resilience"],["SRE EB","Continuous Resilience"],["SRE CAOS","Continuous Resilience"]]]],
-  foot:"Todas usan el mismo tipo de tarea. Lo que cambia es el nombre y la configuración de cada una."},
- e1:{n:"E2E MQ Process Messages",env:"qa",why:"Pruebas end to end. Corre en paralelo con los otros tres stages E2E.",jobs:[["1 job",[["Tasks","Se abren en vivo en la pestaña Tasks."]]]]},
- e2:{n:"E2E AWS ProcessFile S3",env:"qa",why:"Pruebas end to end. Corre en paralelo con los otros tres stages E2E.",jobs:[["1 job",[["Tasks","Se abren en vivo en la pestaña Tasks."]]]]},
- e3:{n:"E2E RetryAnnulments",env:"qa",why:"Pruebas end to end. Corre en paralelo con los otros tres stages E2E.",jobs:[["1 job",[["Tasks","Se abren en vivo en la pestaña Tasks."]]]]},
- e4:{n:"E2E PostBalanceRunner",env:"qa",why:"Pruebas end to end. Corre en paralelo con los otros tres stages E2E.",jobs:[["1 job",[["Tasks","Se abren en vivo en la pestaña Tasks."]]]]},
- sec:{n:"Security E2E",env:"qa",why:"Espera a que terminen los cuatro stages E2E.",jobs:[["1 job",[["0 tasks","En el diagrama aparece con 1 job y 0 tasks."]]]]},
- perf:{n:"Performance Test CER",env:"qa",why:"Mide cómo responde el servicio bajo presión, con JMeter.",
-  jobs:[["Agent job",[
-   ["Artifactory Generic Download","Baja archivos desde Artifactory antes de empezar."],
-   ["JMeter Test Linea Base + Publish Report","La medición de referencia y su reporte HTML."],
-   ["JMeter Test carga + Publish Report","Simula el uso esperado de usuarios y publica su reporte."],
-   ["JMeter Test estres + Publish Report","Sube la presión más allá de lo normal para ver dónde se rompe, y publica su reporte."],
-   ["Shell Script","Un script de shell cierra el stage."]]]]},
- oc:{n:"Create OC",env:"oc",manual:"Aprobación de líder de componente",why:"Último filtro antes de producción: se revisan variables, el líder aprueba y se genera la orden de cambio.",
-  jobs:[["Agent job",[["Compare Release Variables","Compara las variables del release para detectar diferencias antes de pasar a producción."]]],
-        ["Agentless job (corre en el servidor)",[["Aprobación de líder de componente","Manual intervention: el release se detiene hasta que el líder apruebe o rechace."]]],
-        ["Agent job",[["Change Order USD","Genera la orden de cambio que respalda el paso a producción."]]]]},
- pdn:{n:"Deploy PDN",env:"pdn",why:"Despliega en producción.",
-  trig:"Variable group con alcance Deploy PDN: bolsillos-security-istio-pdn.",
-  jobs:[["Agent job",[["Tasks","Se abren en vivo en la pestaña Tasks."]]]]},
- smoke:{n:"Smoke Test",env:"pdn",manual:"Manual Intervention",why:"Primera revisión rápida después de desplegar en PDN.",
-  jobs:[["Agentless job (corre en el servidor)",[["Manual Intervention","El flujo se pausa y una persona confirma que el servicio responde. Puede continuar o rechazar."]]],
-        ["Agent job",[["RollBack","Tarea de reversa, lista para devolver el servicio si hace falta."]]]]},
- uv:{n:"User Validation",env:"pdn",manual:"Verificación por parte del Usuario",why:"El usuario valida y se guarda un paquete del resultado.",
-  jobs:[["Agentless job (corre en el servidor)",[["Verificación por parte del Usuario","Una persona del lado usuario valida el resultado y da el visto bueno."]]],
-        ["Agent job",[["Replace tokens","En el Dockerfile y en el YAML, con los valores de PDN."],["Copy Files","Copia a una carpeta de trabajo lo que se va a guardar."],["Archive","Lo comprime en un solo archivo."],["Artifactory Generic Upload","Sube ese archivo a Artifactory para conservarlo."]]],
-        ["Agent job",[["RollBack","Un último job con la tarea de reversa."]]]]},
- rb:{n:"Rollback",env:"pdn",why:"El camino de vuelta: vuelve a desplegar a partir de un paquete guardado.",
-  jobs:[["Agent job",[
-   ["RollBack","La tarea de reversa del stage."],
-   ["Artifactory Generic Download","Descarga el paquete guardado en Artifactory."],
-   ["Extract files","Lo descomprime."],
-   ["Replace tokens","Llena los archivos con los valores del ambiente."],
-   ["kubectl apply app.yaml","Aplica el manifiesto de la aplicación."],
-   ["kubectl apply gateway.yaml","Aplica el manifiesto del gateway."]]]]}
-};
-var envTag={dev:["t-dev","DEV"],qa:["t-qa","QA (CER)"],oc:["t-oc","Paso a PDN"],pdn:["t-pdn","PDN"]};
-var lanes=[
- {env:"dev",t:"DEV",c:"var(--cyan)",seq:["dev"]},
- {env:"qa",t:"QA (CER)",c:"var(--yellow)",seq:["cer","acc","sre",["e1","e2","e3","e4"],"sec","perf"]},
- {env:"oc",t:"Paso a PDN",c:"var(--purple)",seq:["oc"]},
- {env:"pdn",t:"PDN",c:"var(--green)",seq:["pdn","smoke","uv","rb"]}
-];
-var btns={};
-function mk(id){
-  var b=document.createElement("button");b.className="stg";b.type="button";b.setAttribute("aria-pressed","false");
-  b.innerHTML=esc(S[id].n)+(S[id].manual?' <span class="man">MANUAL</span>':'');
-  b.addEventListener("click",function(){show(id)});btns[id]=b;return b}
-var L=$("lanes");
-lanes.forEach(function(l){
-  var d=document.createElement("div");d.className="lane";
-  d.innerHTML='<h3><i style="background:'+l.c+'"></i>'+l.t+'</h3>';
-  var s=document.createElement("div");s.className="stages";
-  l.seq.forEach(function(x){
-    if(Array.isArray(x)){var p=document.createElement("div");p.className="par";p.innerHTML="<small>4 stages en paralelo</small>";x.forEach(function(y){p.appendChild(mk(y))});s.appendChild(p)}
-    else s.appendChild(mk(x))});
-  d.appendChild(s);L.appendChild(d)});
-function show(id){
-  Object.keys(btns).forEach(function(k){btns[k].setAttribute("aria-pressed",k===id)});
-  var s=S[id],h='<span class="tag '+envTag[s.env][0]+'">'+envTag[s.env][1]+'</span><h2>'+esc(s.n)+'</h2><p>'+esc(s.why)+'</p>';
-  if(s.trig)h+='<p style="color:var(--muted)">'+esc(s.trig)+'</p>';
-  s.jobs.forEach(function(j){h+='<div class="job">'+esc(j[0])+'</div><ul class="tasks">'+j[1].map(function(t){return '<li><b>'+esc(t[0])+'</b><span>'+esc(t[1])+'</span></li>'}).join("")+'</ul>'});
-  if(s.foot)h+='<p class="note">'+esc(s.foot)+'</p>';
-  $("d1").innerHTML=h}
-show("dev");
+function render(){
+  dots();
+  if(st.i<Q.length)return renderQ();
+  if(st.i===Q.length)return renderOrder();
+  renderEnd();
+}
+function nav(next){
+  return '<div class="row"><button class="btn alt" id="prev"'+(st.i===0?' disabled':'')+'>Anterior</button>'+next+'</div>'}
+function bindNav(){var p=$("prev");if(p)p.onclick=function(){go(st.i-1)}}
+function go(i){st.i=Math.max(0,Math.min(Q.length+1,i));render();window.scrollTo(0,0)}
 
-/* simulación */
-var order=[["dev"],["cer"],["acc"],["sre"],["e1","e2","e3","e4"],["sec"],["perf"],["oc"],["pdn"],["smoke"],["uv"],["rb"]];
-var token=0,resume=null;
-function wait(ms){return new Promise(function(r){setTimeout(r,reduce?Math.min(ms,80):ms)})}
-function clear(){Object.keys(btns).forEach(function(k){btns[k].classList.remove("run","ok","wait")})}
-$("gateok").onclick=function(){if(resume){var r=resume;resume=null;$("gate").hidden=true;r()}};
-$("simreset").onclick=function(){token++;resume=null;clear();$("gate").hidden=true;$("sim").disabled=false;$("simreset").hidden=true;$("simstate").textContent="Toca un stage para ver qué hace, o simula el recorrido."};
-$("sim").onclick=async function(){
-  var my=++token;clear();$("sim").disabled=true;$("simreset").hidden=false;$("simstate").textContent="Release en curso…";
-  for(var i=0;i<order.length;i++){
-    var grp=order[i];if(my!==token)return;
-    grp.forEach(function(g){btns[g].classList.add("run")});show(grp[0]);await wait(900);if(my!==token)return;
-    var man=S[grp[0]].manual;
-    if(man){grp.forEach(function(g){btns[g].classList.remove("run");btns[g].classList.add("wait")});
-      $("simstate").textContent="Pausa manual en "+S[grp[0]].n;$("gatetxt").textContent=S[grp[0]].n+": "+man+". El release espera a una persona.";$("gate").hidden=false;
-      await new Promise(function(r){resume=r});if(my!==token)return;$("simstate").textContent="Release en curso…"}
-    grp.forEach(function(g){btns[g].classList.remove("run","wait");btns[g].classList.add("ok")})}
-  $("simstate").textContent="Release completo: DEV, QA y PDN.";$("sim").disabled=false};
+function renderQ(){
+  var q=Q[st.i],sh=st.shown[st.i],v=st.votes[st.i],tot=total(st.i),w=winner(st.i);
+  var h='<div class="kick"><span class="tag">Ronda '+(st.i+1)+' de '+N+'</span>'+esc(q.t)+'</div><h2 class="q">'+esc(q.q)+'</h2>'+(q.ctx?'<p class="ctx">'+esc(q.ctx)+'</p>':'');
+  h+='<div class="opts">'+q.o.map(function(o,k){
+    var cls="opt"+(sh?(k===q.a?" right":" wrong"):""),pct=tot?Math.round(v[k]/tot*100):0;
+    return '<div class="'+cls+'"><button class="main" data-k="'+k+'"'+(sh?' disabled':'')+'><span class="k">'+"ABCD"[k]+'</span><span class="t">'+esc(o)+'</span></button>'+
+     '<div class="meter"><div class="bar"><span style="width:'+(sh?pct:0)+'%"></span></div><span>'+v[k]+(sh&&tot?' · '+pct+'%':'')+'</span>'+(sh?'':'<button class="minus" data-m="'+k+'" aria-label="Quitar un voto a '+"ABCD"[k]+'">−1</button>')+'</div></div>'}).join("")+'</div>';
+  if(!sh){
+    h+='<p class="hint">Cada mano levantada es un clic en su opción (o la tecla 1, 2, 3, 4). Cuando todos voten, revela.</p>';
+    h+=nav('<button class="btn go" id="rev">Revelar respuesta ('+tot+' votos)</button>');
+  }else{
+    var good=w===q.a;
+    h+='<div class="why'+(good?'':' miss')+'"><h2>'+(tot?(good?'La sala acertó':(w<0?'La sala quedó dividida':'La sala votó '+"ABCD"[w]+' y no era')):'Nadie votó')+'. Respuesta: '+"ABCD"[q.a]+'</h2><p>'+esc(q.w)+'</p><span class="src">Se ve en: '+esc(q.src)+'</span></div>';
+    h+=nav('<button class="btn go" id="nx">'+(st.i===Q.length-1?'A la última ronda':'Siguiente')+'</button>');
+  }
+  $("stage").innerHTML=h;bindNav();
+  var s=$("stage");
+  Array.prototype.forEach.call(s.querySelectorAll(".main"),function(b){b.onclick=function(){st.votes[st.i][+b.dataset.k]++;renderQ_keep()}});
+  Array.prototype.forEach.call(s.querySelectorAll(".minus"),function(b){b.onclick=function(){var k=+b.dataset.m;if(st.votes[st.i][k])st.votes[st.i][k]--;renderQ_keep()}});
+  if($("rev"))$("rev").onclick=function(){st.shown[st.i]=true;render()};
+  if($("nx"))$("nx").onclick=function(){go(st.i+1)};
+}
+function renderQ_keep(){var y=window.scrollY;renderQ();window.scrollTo(0,y)}
 
-/* ---------- 3. Configuración ---------- */
-var groups=[
- ["Todo el release","base_images","base_images_users","bolsillos-cloud-docker-kubernetes-configuration-aws"],
- ["Deploy DEV","nu6560001_Pockets_MR_variables_dev","bolsillos_variables_mqi_dev","gmfinteroperable-security-istio-dev","Nu6560001_BolsillosCloud_Service_Redis_dev"],
- ["Deploy CER (QA)","nu6560001_Pockets_MR_variables_qa","bolsillos_variables_mqi_qa","bolsillos-security-istio-qa","Nu6560001_BolsillosCloud_Service_Redis_qa"],
- ["Deploy PDN","bolsillos-security-istio-pdn"]
-];
-var cfg=[
- {id:"vars",t:"Variables",f:function(){return '<h2>Variables del release</h2><p>Lo que cambia entre ambientes vive en variables, no en el código.</p><ul class="tasks">'+
-  [["Pipeline variables","Variables propias del release."],["Variable groups","Conjuntos de variables que se reutilizan. Se enlazan al release y cada uno tiene un alcance."],["Predefined variables","Las que ya trae Azure DevOps, como el directorio de trabajo del agente."]].map(function(x){return '<li><b>'+x[0]+'</b><span>'+x[1]+'</span></li>'}).join("")+'</ul>'}},
- {id:"groups",t:"Variable groups",f:function(){
-   var h='<h2>Variable groups y su alcance</h2><p>El alcance decide en qué stage se usa cada grupo. Elige uno.</p><div class="row" id="scopes">'+groups.map(function(g,i){return '<button class="chip" type="button" data-i="'+i+'" aria-pressed="'+(i===1)+'">'+g[0]+'</button>'}).join("")+'</div><div class="cols" id="glist"></div>';return h},
-   after:function(){var cur=1;function draw(){var g=groups[cur];$("glist").innerHTML=g.slice(1).map(function(x){return '<div class="grp"><b>'+esc(x)+'</b></div>'}).join("");
-     Array.prototype.forEach.call($("scopes").children,function(b,i){b.setAttribute("aria-pressed",i===cur)})}
-     $("scopes").addEventListener("click",function(e){var b=e.target.closest("button");if(b){cur=+b.dataset.i;draw()}});draw()}},
- {id:"ret",t:"Retention",f:function(){return '<h2>Retención</h2><p>Cuánto tiempo se guardan los releases y qué se guarda con ellos.</p><ul class="tasks">'+
-  [["730 días","Cada release se conserva dos años."],["Mínimo 25 releases","Aunque pase ese tiempo, siempre quedan al menos 25 releases guardados."],["Retain associated artifacts","Con cada release se guardan también sus artefactos, así se puede revisar qué se desplegó."]].map(function(x){return '<li><b>'+x[0]+'</b><span>'+x[1]+'</span></li>'}).join("")+'</ul><p class="note">Se define por stage. En todos los stages la política es la misma.</p>'}},
- {id:"opt",t:"Options",f:function(){return '<h2>Opciones generales</h2><p>La pestaña Options tiene dos secciones, General e Integrations.</p><ul class="tasks"><li><b>Release name format</b><span>Aquí está Release-$(rev:r). El rev:r es un contador que sube con cada release, por eso existen Release-139 y Release-148.</span></li><li><b>Description</b><span>Texto libre para describir el pipeline.</span></li></ul>'}},
- {id:"hist",t:"History",f:function(){return '<h2>Historial de cambios</h2><p>Cada cambio a la definición del release queda registrado.</p><ul class="tasks"><li><b>Qué registra</b><span>Quién lo hizo, qué tipo de cambio fue, cuándo y un comentario.</span></li><li><b>Para qué sirve</b><span>Para auditar. Si el despliegue se comporta distinto, se ve qué cambió y quién lo tocó.</span></li><li><b>En este release</b><span>Todos los cambios visibles son de tipo Update. Los más recientes son del 20/10/2026.</span></li></ul>'}}
-];
-var cc=$("cfgchips");
-cfg.forEach(function(c,i){var b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c.t;b.setAttribute("aria-pressed","false");b.addEventListener("click",function(){showCfg(i)});cc.appendChild(b)});
-function showCfg(i){Array.prototype.forEach.call(cc.children,function(b,j){b.setAttribute("aria-pressed",j===i)});$("d2").innerHTML=cfg[i].f();if(cfg[i].after)cfg[i].after()}
-showCfg(1);
+/* ronda final: armar el release en orden */
+function shuffle(a,seed){var r=a.slice(),s=seed;for(var i=r.length-1;i>0;i--){s=(s*9301+49297)%233280;var j=Math.floor(s/233280*(i+1));var t=r[i];r[i]=r[j];r[j]=t}return r}
+function renderOrder(){
+  var o=st.ord;if(o.seed==null)o.seed=Math.floor(Math.random()*1000)+1;
+  var mix=shuffle(ORDER.map(function(_,i){return i}),o.seed);
+  var h='<div class="kick"><span class="tag">Ronda '+N+' de '+N+'</span>Arma el release</div><h2 class="q">Pónganlos en el orden en que corren, desde DEV hasta User Validation</h2>';
+  h+='<p class="ctx">La sala grita el siguiente y se toca. Si se equivoca, se marca y se cuenta el error.</p>';
+  h+='<div class="chips">'+mix.map(function(k){var used=k<o.pos;return '<button class="chip" data-k="'+k+'"'+(used||o.done?' disabled':'')+'>'+esc(ORDER[k][0])+'</button>'}).join("")+'</div>';
+  h+='<div class="line">'+ORDER.map(function(x,k){return k<o.pos?'<div class="slot on">'+esc(x[0])+(x[1]?'<em>'+esc(x[1])+'</em>':'')+'</div>':'<div class="slot"></div>'}).join("")+'</div>';
+  if(o.done)h+='<div class="why'+(o.errs?' miss':'')+'"><h2>'+(o.errs?'Armado con '+o.errs+(o.errs===1?' error':' errores'):'Armado sin errores')+'</h2><p>Hasta QA todo es automático. Create OC es la primera pausa manual y lleva a Deploy PDN; después vienen Smoke Test y User Validation.</p><span class="src">Se ve en: Retention (orden de los stages) y Tasks</span></div>';
+  else h+='<p class="hint">Errores hasta ahora: '+o.errs+'</p>';
+  h+=nav('<button class="btn alt" id="rs">Reordenar</button><button class="btn go" id="fin"'+(o.done?'':' disabled')+'>Ver resultado</button>');
+  $("stage").innerHTML=h;bindNav();
+  Array.prototype.forEach.call($("stage").querySelectorAll(".chip"),function(b){b.onclick=function(){
+    var k=+b.dataset.k;if(k===o.pos){o.pos++;if(o.pos===ORDER.length)o.done=true;var y=scrollY;render();scrollTo(0,y)}
+    else{o.errs++;b.classList.add("bad");setTimeout(function(){var y=scrollY;render();scrollTo(0,y)},reduce?0:450)}}});
+  $("rs").onclick=function(){o.pos=0;o.errs=0;o.done=false;o.seed=null;render()};
+  $("fin").onclick=function(){go(Q.length+1)};
+}
+
+function renderEnd(){
+  var ok=0,miss=[];Q.forEach(function(q,i){if(hit(i))ok++;else miss.push(i)});
+  var h='<div class="kick"><span class="tag">Resultado</span>La sala</div><div class="big">'+ok+' de '+Q.length+'</div><p class="ctx">preguntas acertadas por votación.'+(st.ord.done?' Armaron el release con '+st.ord.errs+(st.ord.errs===1?' error.':' errores.'):'')+'</p>';
+  if(miss.length){h+='<h2 class="q" style="font-size:1.3rem">Para repasar</h2><ul class="miss-list">'+miss.map(function(i){return '<li><b>'+esc(Q[i].q)+'</b><br><span class="hint">'+esc(Q[i].o[Q[i].a])+' — '+esc(Q[i].w)+'</span></li>'}).join("")+'</ul>'}
+  else h+='<p class="ctx">No hay nada que repasar.</p>';
+  h+=nav('<button class="btn alt" id="again">Jugar de nuevo</button>');
+  $("stage").innerHTML=h;bindNav();
+  $("again").onclick=function(){st.votes=Q.map(function(q){return q.o.map(function(){return 0})});st.shown=Q.map(function(){return false});st.ord={pos:0,errs:0,done:false,seed:null};go(0)};
+}
+
+document.addEventListener("keydown",function(e){
+  if(e.target&&/INPUT|TEXTAREA/.test(e.target.tagName))return;
+  if(st.i<Q.length&&!st.shown[st.i]&&/^[1-4]$/.test(e.key)&&+e.key<=Q[st.i].o.length){st.votes[st.i][+e.key-1]++;renderQ_keep()}
+  else if(e.key==="ArrowRight"&&st.i<Q.length&&st.shown[st.i])go(st.i+1);
+  else if(e.key==="ArrowLeft")go(st.i-1);
+  else if(e.key==="Enter"&&e.target.tagName!=="BUTTON"&&st.i<Q.length&&!st.shown[st.i]){st.shown[st.i]=true;render()}
+});
+render();
 })();
 </script>
 </body></html>
